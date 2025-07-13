@@ -24,27 +24,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-// Create MySQL connection
-const connection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME
-});
-
-// Connect to MySQL
-connection.connect((err) => {
-  if (err) {
-    console.error('MySQL connection error:', err);
-    return;
-  }
-  console.log('Connected to MySQL database');
-});
-
 sequelize.sync({ alter: true })
   .then(() => console.log("Database synced"))
   .catch(err => console.error("Database sync error:", err));
-
 
 // POST /shorten
 app.post('/shorten', async (req, res) => {
