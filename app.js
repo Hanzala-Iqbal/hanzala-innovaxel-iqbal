@@ -3,11 +3,33 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const mysql = require('mysql2');
+require('dotenv').config();
+
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
 var app = express();
+
+
+// Create MySQL connection
+const connection = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME
+});
+
+// Connect to MySQL
+connection.connect((err) => {
+  if (err) {
+    console.error('MySQL connection error:', err);
+    return;
+  }
+  console.log('Connected to MySQL database');
+});
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
