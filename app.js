@@ -97,6 +97,34 @@ app.get('/shorten/:shortCode', async (req, res) => {
   }
 });
 
+app.put('/shorten/:shortCode', async (req, res) => {
+  const { shortCode } = req.params;
+  const { url } = req.body;
+
+  // Validate input
+  if (!url || typeof url !== 'string') {
+    return res.status(400).json({ error: 'A valid URL is required!' });
+  }
+
+  try {
+    // Find existing short URL entry
+    const urlEntry = await Url.findOne({ where: { shortCode } });
+
+    if (!urlEntry) {
+      return res.status(404).json({ error: 'Short URL not found.' });
+    }
+
+    // Update the URL
+    urlEntry.url = url;
+    await urlEntry.save();
+
+    res.status(200).json(await Url.findOne({ where: { shortCode }, attributes: { exclude: ['count'] } }));
+  } catch (error) {
+    console.error("Error in PUT /shorten/:shortCode:", error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views/index.html'));
