@@ -10,11 +10,18 @@ const Url = require('./models/Url');
 const { nanoid } = require('nanoid');
 
 
-
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-
 var app = express();
+
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+app.engine('html', require('ejs').renderFile);
+
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 // Create MySQL connection
@@ -41,15 +48,17 @@ sequelize.sync({ alter: true })
 
 // POST /shorten
 app.post('/shorten', async (req, res) => {
+  console.log("POST /shorten hit");
+  console.log("Request body:", req.body);
+
   const { url } = req.body;
 
-  // Basic Validation
   if (!url || typeof url !== 'string') {
+    console.log("Validation failed");
     return res.status(400).json({ error: 'A valid URL is required.' });
   }
 
   try {
-    // Generate unique shortcode
     let shortCode;
     let existing;
     do {
@@ -57,36 +66,24 @@ app.post('/shorten', async (req, res) => {
       existing = await Url.findOne({ where: { shortCode } });
     } while (existing);
 
-    // Create new URL entry
-    const newUrl = await Url.create({
-      url,
-      shortCode
-    });
+    console.log("Shortcode generated:", shortCode);
+
+    const newUrl = await Url.create({ url, shortCode });
+
+    console.log("New URL entry created:", newUrl);
 
     res.status(201).json(newUrl);
   } catch (error) {
-    console.error(error);
+    console.error("Error in /shorten route:", error);
     res.status(500).json({ error: 'Something went wrong.' });
   }
 });
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views/index.html'));
 });
+
 
 // error handler
 app.use(function(err, req, res, next) {
@@ -96,7 +93,17 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  res.send(`Error: ${err.message}`);
 });
 
 module.exports = app;
+
+// catch 404 and forward to error handler
+app.use(function(req, res, next) {
+  next(createError(404));
+});
+
+// Start server
+app.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
+});
