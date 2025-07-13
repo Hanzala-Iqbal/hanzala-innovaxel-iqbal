@@ -143,6 +143,29 @@ app.delete('/shorten/:shortCode', async (req, res) => {
   }
 });
 
+app.get('/shorten/:shortCode/stats', async (req, res) => {
+  const { shortCode } = req.params;
+
+  try {
+    const urlEntry = await Url.findOne({ where: { shortCode } });
+
+    if (!urlEntry) {
+      return res.status(404).json({ error: 'Short URL not found.' });
+    }
+
+    res.status(200).json({
+      id: urlEntry.id,
+      url: urlEntry.url,
+      shortCode: urlEntry.shortCode,
+      createdAt: urlEntry.createdAt,
+      updatedAt: urlEntry.updatedAt,
+      accessCount: urlEntry.count || 0
+    });
+  } catch (error) {
+    console.error("Error in GET /shorten/:shortCode/stats:", error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views/index.html'));
