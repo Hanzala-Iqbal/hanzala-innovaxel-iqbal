@@ -79,6 +79,24 @@ app.post('/shorten', async (req, res) => {
   }
 });
 
+app.get('/shorten/:shortCode', async (req, res) => {
+  const { shortCode } = req.params;
+
+  try {
+    const urlEntry = await Url.findOne({ where: { shortCode },
+      attributes: { exclude: ['count'] } });
+
+    if (!urlEntry) {
+      return res.status(404).json({ error: 'Short URL not found.' });
+    }
+
+    res.status(200).json(urlEntry);
+  } catch (error) {
+    console.error("Error in GET /shorten/:shortCode:", error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views/index.html'));
