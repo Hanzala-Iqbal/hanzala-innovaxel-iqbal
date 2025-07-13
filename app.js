@@ -5,6 +5,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const mysql = require('mysql2');
 require('dotenv').config();
+const sequelize = require('./db');
+const Url = require('./models/Url');
 
 
 var indexRouter = require('./routes/index');
@@ -29,6 +31,11 @@ connection.connect((err) => {
   }
   console.log('Connected to MySQL database');
 });
+
+sequelize.sync({ alter: true })
+  .then(() => console.log("Database synced"))
+  .catch(err => console.error("Database sync error:", err));
+
 
 
 // view engine setup
