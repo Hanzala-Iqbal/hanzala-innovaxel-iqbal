@@ -125,6 +125,24 @@ app.put('/shorten/:shortCode', async (req, res) => {
   }
 });
 
+app.delete('/shorten/:shortCode', async (req, res) => {
+  const { shortCode } = req.params;
+
+  try {
+    const deletedCount = await Url.destroy({ where: { shortCode } });
+
+    if (deletedCount === 0) {
+      return res.status(404).json({ error: 'Short URL not found.' });
+    }
+
+    // 204 No Content means success, no body returned
+    res.status(204).send();
+  } catch (error) {
+    console.error("Error in DELETE /shorten/:shortCode:", error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views/index.html'));
