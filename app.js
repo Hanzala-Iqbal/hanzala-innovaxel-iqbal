@@ -7,6 +7,8 @@ const mysql = require('mysql2');
 require('dotenv').config();
 const sequelize = require('./db');
 const Url = require('./models/Url');
+const { nanoid } = require('nanoid');
+
 
 
 var indexRouter = require('./routes/index');
@@ -37,6 +39,36 @@ sequelize.sync({ alter: true })
   .catch(err => console.error("Database sync error:", err));
 
 
+// POST /shorten
+app.post('/shorten', async (req, res) => {
+  const { url } = req.body;
+
+  // Basic Validation
+  if (!url || typeof url !== 'string') {
+    return res.status(400).json({ error: 'A valid URL is required.' });
+  }
+
+  try {
+    // Generate unique shortcode
+    let shortCode;
+    let existing;
+    do {
+      shortCode = nanoid(6);
+      existing = await Url.findOne({ where: { shortCode } });
+    } while (existing);
+
+    // Create new URL entry
+    const newUrl = await Url.create({
+      url,
+      shortCode
+    });
+
+    res.status(201).json(newUrl);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
