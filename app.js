@@ -3,7 +3,6 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-const mysql = require('mysql2');
 require('dotenv').config();
 const sequelize = require('./db');
 const Url = require('./models/Url');
@@ -65,14 +64,17 @@ app.get('/shorten/:shortCode', async (req, res) => {
   const { shortCode } = req.params;
 
   try {
-    const urlEntry = await Url.findOne({ where: { shortCode },
-      attributes: { exclude: ['count'] } });
+    const urlEntry = await Url.findOne({ where: { shortCode }
+    });
 
-    if (!urlEntry) {
-      return res.status(404).json({ error: 'Short URL not found.' });
-    }
+    // Increment the access count
+    urlEntry.count = (urlEntry.count || 0) + 1;
+    await urlEntry.save();
 
-    res.status(200).json(urlEntry);
+    // Respond without count:
+    const { id, url, shortCode: code, createdAt, updatedAt } = urlEntry;
+    res.status(200).json({ id, url, shortCode: code, createdAt, updatedAt });
+
   } catch (error) {
     console.error("Error in GET /shorten/:shortCode:", error);
     res.status(500).json({ error: 'Something went wrong.' });
